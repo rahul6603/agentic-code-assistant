@@ -1,6 +1,6 @@
 import argparse
 import os
-
+import json
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -48,7 +48,22 @@ def main():
     if not chat.choices or len(chat.choices) == 0:
         raise RuntimeError("no choices in response")
 
-    print(chat.choices[0].message.content)
+    message = chat.choices[0].message
+    tool_calls = message.tool_calls
+    if tool_calls and len(tool_calls) > 0:
+        for tool_call in tool_calls:
+            if tool_call.type == "function":
+                function_name = tool_call.function.name
+                if function_name == "Read":
+                    arguments = json.loads(tool_call.function.arguments)
+                    if isinstance(arguments, dict):
+                        file_path = arguments.get("file_path")
+                        if file_path:
+                            with open(file_path, "r", encoding="utf-8") as f:
+                                content = f.read()
+                            print(content)
+    else:
+        print(chat.choices[0].message.content)
 
 
 if __name__ == "__main__":
