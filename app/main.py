@@ -61,7 +61,28 @@ def main():
                             "required": ["file_path"],
                         },
                     },
-                }
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "Write",
+                        "description": "Write content to a file",
+                        "parameters": {
+                            "type": "object",
+                            "required": ["file_path", "content"],
+                            "properties": {
+                                "file_path": {
+                                    "type": "string",
+                                    "description": "The path of the file to write to",
+                                },
+                                "content": {
+                                    "type": "string",
+                                    "description": "The content to write to the file",
+                                },
+                            },
+                        },
+                    },
+                },
             ],
         )
 
@@ -96,6 +117,8 @@ def main():
                 )
                 if function_name == "Read":
                     tool_response = execute_read_tool(arguments)
+                elif function_name == "Write":
+                    tool_response = execute_write_tool(arguments)
                 else:
                     tool_response = f"Unknown tool: {function_name}"
                 tool_messages.append(
@@ -107,6 +130,49 @@ def main():
                 )
         conversation_history.append(assistant_message)
         conversation_history.extend(tool_messages)
+
+
+def execute_write_tool(arguments: str) -> str:
+    try:
+        arguments = json.loads(arguments)
+    except json.JSONDecodeError:
+        logger.error(error := "Invalid JSON in arguments")
+        return error
+    if not isinstance(arguments, dict):
+        logger.error(error := "Arguments in response not in dict format")
+        return error
+    file_path = arguments.get("file_path")
+    if not file_path:
+        logger.error(error := "file_path argument missing in response")
+        return error
+    if not isinstance(file_path, str):
+        logger.error(error := "Invalid file_path argument")
+        return error
+    content = arguments.get("content")
+    if not content:
+        logger.error(error := "content argument missing in response")
+        return error
+    if not isinstance(content, str):
+        logger.error(error := "Invalid content argument")
+        return error
+    try:
+        requested_path = (SAFE_DIR / file_path).resolve()
+        requested_path.relative_to(SAFE_DIR)
+        requested_path.write_text(content)
+        return ""
+
+    except ValueError:
+        logger.error(error := f"Path outside allowed directory: {file_path}")
+        return error
+    except FileNotFoundError:
+        logger.error(error := f"Path not found: {file_path}")
+        return error
+    except PermissionError:
+        logger.error(error := f"Permission denied: {file_path}")
+        return error
+    except Exception as e:
+        logger.error(error := f"Error writing to file: {e}")
+        return error
 
 
 def execute_read_tool(arguments: str) -> str:
