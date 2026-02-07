@@ -2,6 +2,7 @@ import argparse
 import os
 import json
 import logging
+import subprocess
 from pathlib import Path
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -83,6 +84,23 @@ def main():
                         },
                     },
                 },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "Bash",
+                        "description": "Execute a shell command",
+                        "parameters": {
+                            "type": "object",
+                            "required": ["command"],
+                            "properties": {
+                                "command": {
+                                    "type": "string",
+                                    "description": "The command to execute",
+                                }
+                            },
+                        },
+                    },
+                },
             ],
         )
 
@@ -119,6 +137,8 @@ def main():
                     tool_response = execute_read_tool(arguments)
                 elif function_name == "Write":
                     tool_response = execute_write_tool(arguments)
+                elif function_name == "Bash":
+                    tool_response = execute_bash_tool(arguments)
                 else:
                     tool_response = f"Unknown tool: {function_name}"
                 tool_messages.append(
@@ -130,6 +150,35 @@ def main():
                 )
         conversation_history.append(assistant_message)
         conversation_history.extend(tool_messages)
+
+
+def execute_bash_tool(arguments: str) -> str:
+    try:
+        arguments = json.loads(arguments)
+    except json.JSONDecodeError:
+        logger.error(error := "Invalid JSON in arguments")
+        return error
+    if not isinstance(arguments, dict):
+        logger.error(error := "Arguments in response not in dict format")
+        return error
+    command = arguments.get("command")
+    if not command:
+        logger.error(error := "command argument missing in response")
+        return error
+    try:
+        result = subprocess.run(
+            command, shell=True, capture_output=True, text=True, timeout=30
+        )
+        return f"STDOUT: {result.stdout}\nSTDERR: {result.stderr}"
+    except PermissionError:
+        logger.error(error := "Permission denied to execute command")
+        return error
+    except subprocess.TimeoutExpired:
+        logger.error(error := "Command took too long")
+        return error
+    except Exception as e:
+        logger.error(error := f"Unexpected error while executing the command: {e}")
+        return error
 
 
 def execute_write_tool(arguments: str) -> str:
@@ -171,7 +220,7 @@ def execute_write_tool(arguments: str) -> str:
         logger.error(error := f"Permission denied: {file_path}")
         return error
     except Exception as e:
-        logger.error(error := f"Error writing to file: {e}")
+        logger.error(error := f"Unexpected error while writing to file: {e}")
         return error
 
 
@@ -208,7 +257,7 @@ def execute_read_tool(arguments: str) -> str:
         logger.error(error := f"Permission denied: {file_path}")
         return error
     except Exception as e:
-        logger.error(error := f"Error reading file: {e}")
+        logger.error(error := f"Unexpected error while reading file: {e}")
         return error
 
 
