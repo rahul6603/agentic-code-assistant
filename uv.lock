@@ -33,7 +33,7 @@ wheels = [
 ]
 
 [[package]]
-name = "codecrafters-claude-code"
+name = "claude-code-clone"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
