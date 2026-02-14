@@ -12,7 +12,7 @@ from openai.types.chat.chat_completion_message_function_tool_call_param import (
     Function,
 )
 
-from .lsp.server import LanguageServer
+from .lsp.server import LanguageServerManager
 from .tools.bash import execute_bash_tool
 from .tools.definitions import TOOL_DEFINITIONS
 from .tools.read import execute_read_tool
@@ -31,8 +31,7 @@ def main():
         logger.error("OPENROUTER_API_KEY is not set")
         return
 
-    language_server = LanguageServer()
-    language_server.initialize()
+    language_server_manager = LanguageServerManager()
     client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
 
     initial_user_message = ChatCompletionUserMessageParam(role="user", content=args.p)
@@ -74,9 +73,13 @@ def main():
                     )
                 )
                 if function_name == "Read":
-                    tool_response = execute_read_tool(language_server, arguments)
+                    tool_response = execute_read_tool(
+                        language_server_manager, arguments
+                    )
                 elif function_name == "Write":
-                    tool_response = execute_write_tool(language_server, arguments)
+                    tool_response = execute_write_tool(
+                        language_server_manager, arguments
+                    )
                 elif function_name == "Bash":
                     tool_response = execute_bash_tool(arguments)
                 else:

@@ -2,13 +2,13 @@ import logging
 import json
 
 from app.config import SAFE_DIR
-from app.lsp.server import LanguageServer
+from app.lsp.server import LanguageServerManager
 
 logger = logging.getLogger(__name__)
 
 
 def execute_read_tool(
-    language_server: LanguageServer,
+    language_server_manager: LanguageServerManager,
     arguments: str,
 ) -> str:
     try:
@@ -31,7 +31,7 @@ def execute_read_tool(
             return error
 
         content = requested_path.read_text(encoding="utf-8")
-        language_server.send_did_read_notification(requested_path, content)
+        language_server_manager.send_did_open_notification(requested_path, content)
 
         return content
 

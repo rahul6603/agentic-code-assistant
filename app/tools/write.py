@@ -2,13 +2,13 @@ import json
 import logging
 
 from app.config import SAFE_DIR
-from app.lsp.server import LanguageServer
+from app.lsp.server import LanguageServerManager
 
 logger = logging.getLogger(__name__)
 
 
 def execute_write_tool(
-    language_server_process: LanguageServer,
+    language_server_manager: LanguageServerManager,
     arguments: str,
 ) -> str:
     try:
@@ -34,7 +34,7 @@ def execute_write_tool(
         requested_path = (SAFE_DIR / file_path).resolve()
         requested_path.relative_to(SAFE_DIR)
         requested_path.write_text(content)
-        diagnostics_output = language_server_process.send_did_change_notification(
+        diagnostics_output = language_server_manager.send_did_change_notification(
             requested_path, content
         )
 
