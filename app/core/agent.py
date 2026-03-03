@@ -137,3 +137,6 @@ class Agent:
         self.conversation_history.append(
             ChatCompletionUserMessageParam(role="user", content=content)
         )
+
+    def clear_conversation(self) -> None:
+        self.conversation_history.clear()

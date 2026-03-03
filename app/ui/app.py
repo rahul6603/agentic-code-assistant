@@ -10,6 +10,7 @@ from textual import work
 
 from app.core.agent import Agent
 from app.config import API_KEY, BASE_URL
+from app.commands.registry import registry
 
 logger = logging.getLogger(__name__)
 
@@ -91,16 +92,24 @@ class ChatApp(App[None]):
         self.query_one(ChatArea).focus()
 
     def on_chat_area_submitted(self, event: ChatArea.Submitted) -> None:
-        if not self.agent:
-            self.handle_error("Could not initialize the OpenRouter client, try again")
-            return
-
         user_input = event.value.strip()
         if not user_input:
             return
 
         chat_area = self.query_one(ChatArea)
         chat_area.text = ""
+
+        if (
+            user_input.startswith("/")
+            and len(user_input.split()) == 1
+            and registry.execute(self, user_input)
+        ):
+            return
+
+        if not self.agent:
+            self.handle_error("Could not initialize the OpenRouter client, try again")
+            return
+
         chat_area.disabled = True
 
         if self._first_message:

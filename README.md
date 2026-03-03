@@ -1,6 +1,6 @@
-# agentic-code-assistant
+# not-claude-code
 
-A simple code assistant built to learn about AI agents.
+A simple code assistant I am making to learn more about AI agents.
 
 ## Features
 
@@ -8,11 +8,11 @@ A simple code assistant built to learn about AI agents.
 - Response streaming
 - Tool usage: read/write file and command execution
 - Python LSP integration
-- Managing conversation history
+- Builtin slash commands
 
 ## To be implemented
 
-- Additional tools
+- Additional tools and commands
 - More language servers
 - Code diff visualization
 - etc.
